@@ -331,7 +331,7 @@
       gap: 3px;
       padding: 16px 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      overflow: hidden;
+      flex-wrap: wrap;
     }
 
     .progress-block {
@@ -339,7 +339,8 @@
       height: 8px;
       border-radius: 1px;
       background: rgba(255, 255, 255, 0.06);
-      flex-shrink: 0;
+      flex-shrink: 1;
+      min-width: 4px;
     }
 
     .progress-block.filled {
@@ -484,16 +485,17 @@
   <!-- ============================================================ -->
   <!-- HEADER                                                        -->
   <!-- ============================================================ -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
-    <div class="max-w-6xl mx-auto px-5 md:px-10 h-16 md:h-[72px] flex items-center justify-between">
+  <!-- HEADER: desktop only -->
+  <header class="hidden md:block fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-10 h-[72px] flex items-center justify-between">
       <!-- Logo (esquerda) -->
       <a href="#hero" class="flex-shrink-0">
-        <img src="logo.png" alt="Conteúdos Automáticos" class="h-8 md:h-10 w-auto">
+        <img src="logo.png" alt="Conteúdos Automáticos" class="h-10 w-auto">
       </a>
 
       <!-- Badge Pré-lançamento (centro) -->
       <span
-        class="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs md:text-sm font-semibold rounded-full px-4 py-1.5 border border-primary/20">
+        class="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold rounded-full px-4 py-1.5 border border-primary/20">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
@@ -503,15 +505,12 @@
         Pré-lançamento
       </span>
 
-      <!-- Nav links (direita, apenas desktop) -->
-      <nav class="hidden md:flex items-center gap-6">
+      <!-- Nav links (direita) -->
+      <nav class="flex items-center gap-6">
         <a href="#como-funciona" class="text-sm text-text-secondary hover:text-white transition-colors">Como
           funciona</a>
         <a href="#planos" class="text-sm text-text-secondary hover:text-white transition-colors">Planos</a>
       </nav>
-
-      <!-- Spacer mobile (para manter badge centralizado) -->
-      <div class="w-[72px] md:hidden"></div>
     </div>
   </header>
 
@@ -519,7 +518,7 @@
   <!-- HERO                                                          -->
   <!-- ============================================================ -->
   <section id="hero"
-    class="relative min-h-screen flex items-center justify-center px-5 md:px-10 lg:px-20 pt-28 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+    class="relative min-h-screen flex items-center justify-center px-5 md:px-10 lg:px-20 pt-10 pb-8 md:pt-32 md:pb-28 overflow-hidden">
     <!-- Orbs -->
     <div class="orb orb-orange w-[420px] h-[420px] -top-40 -right-40 md:w-[600px] md:h-[600px] md:-top-60 md:-right-20">
     </div>
@@ -527,9 +526,20 @@
 
     <div class="max-w-3xl mx-auto text-center relative z-10">
 
-      <!-- Espaço reservado para vídeo futuro
-      <div class="aspect-video bg-surface rounded-2xl mb-8"></div>
-      -->
+      <!-- Mobile: badge + logo empilhados no topo -->
+      <div class="flex flex-col items-center gap-4 mb-8 md:hidden">
+        <span
+          class="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold rounded-full px-4 py-1.5 border border-primary/20">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+          </svg>
+          Pré-lançamento
+        </span>
+        <img src="logo.png" alt="Conteúdos Automáticos" class="h-8 w-auto">
+      </div>
 
       <h1
         class="reveal reveal-delay-1 text-[30px] md:text-[52px] lg:text-[60px] font-bold leading-[1.1] tracking-tight mb-7">
@@ -626,8 +636,7 @@
       <div class="logo-item">
         <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
           <path
-            d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.5 12.068V11.5h3.25v.568c0 2.776.612 5.022 1.82 6.68 1.151 1.58 2.931 2.393 5.29 2.418h.635c.525-.068.995-.189 1.404-.361.998-.42 1.782-1.148 2.332-2.164.654-1.21.987-2.793.987-4.699V4.5h3.25v9.442c0 2.456-.474 4.555-1.41 6.241-.865 1.558-2.107 2.72-3.693 3.453-.86.397-1.823.658-2.866.773a13.428 13.428 0 01-.662.063l-.024.001a8.2 8.2 0 01-.307.016l-.094.005h-.23z" />
-          <circle cx="17.5" cy="4" r="1.5" />
+            d="M16.556 12.346c-.053-2.783-1.513-4.394-3.98-4.394-.227 0-.46.018-.693.053-1.2.187-2.2.747-2.893 1.627-.747.947-1.12 2.213-1.12 3.773 0 1.627.387 2.907 1.147 3.8.707.84 1.68 1.267 2.88 1.267 1.08 0 1.973-.36 2.653-1.067.627-.653.947-1.493.947-2.48 0-.92-.293-1.667-.867-2.213-.533-.507-1.24-.76-2.093-.76-.587 0-1.107.147-1.547.44.067-.747.307-1.333.72-1.747.387-.387.893-.587 1.507-.6h.04c1.4 0 2.14.96 2.187 2.84v.04c.04 2.387-.467 4.253-1.507 5.56-1.013 1.267-2.48 1.92-4.36 1.933h-.04c-1.707-.013-3.067-.627-4.04-1.827C4.473 16.907 3.973 15.2 3.96 13.12v-.08c.013-2.08.513-3.787 1.493-5.067.973-1.267 2.333-1.907 4.04-1.92h.04c1.72.013 3.08.653 4.04 1.907.48.627.84 1.373 1.08 2.227l1.187-.32c-.293-1.04-.733-1.947-1.333-2.72C13.307 5.547 11.667 4.8 9.533 4.787h-.053c-2.12.013-3.76.76-4.867 2.227C3.547 8.44 2.96 10.467 2.947 12.96v.12c.013 2.467.6 4.467 1.667 5.947 1.107 1.533 2.747 2.32 4.88 2.333h.053c2.293-.013 4.067-.813 5.267-2.373 1.2-1.56 1.8-3.72 1.76-6.413l-.013-.24-.007.013zm-4.36 3.827c-.4.413-.92.627-1.56.627-.68 0-1.227-.253-1.627-.747-.44-.547-.667-1.36-.667-2.4 0-.267.013-.52.04-.76.24-.147.52-.227.84-.227.56 0 1 .173 1.307.507.333.36.507.88.507 1.533 0 .6-.16 1.093-.493 1.467h.04-.387z" />
         </svg>
         <span class="text-sm text-text-secondary font-medium">Threads</span>
       </div>
@@ -1144,8 +1153,7 @@
           class="reveal reveal-delay-3 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
           <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
             <path
-              d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.5 12.068V11.5h3.25v.568c0 2.776.612 5.022 1.82 6.68 1.151 1.58 2.931 2.393 5.29 2.418h.635c.525-.068.995-.189 1.404-.361.998-.42 1.782-1.148 2.332-2.164.654-1.21.987-2.793.987-4.699V4.5h3.25v9.442c0 2.456-.474 4.555-1.41 6.241-.865 1.558-2.107 2.72-3.693 3.453-.86.397-1.823.658-2.866.773a13.428 13.428 0 01-.662.063l-.024.001a8.2 8.2 0 01-.307.016l-.094.005h-.23z" />
-            <circle cx="17.5" cy="4" r="1.5" />
+              d="M16.556 12.346c-.053-2.783-1.513-4.394-3.98-4.394-.227 0-.46.018-.693.053-1.2.187-2.2.747-2.893 1.627-.747.947-1.12 2.213-1.12 3.773 0 1.627.387 2.907 1.147 3.8.707.84 1.68 1.267 2.88 1.267 1.08 0 1.973-.36 2.653-1.067.627-.653.947-1.493.947-2.48 0-.92-.293-1.667-.867-2.213-.533-.507-1.24-.76-2.093-.76-.587 0-1.107.147-1.547.44.067-.747.307-1.333.72-1.747.387-.387.893-.587 1.507-.6h.04c1.4 0 2.14.96 2.187 2.84v.04c.04 2.387-.467 4.253-1.507 5.56-1.013 1.267-2.48 1.92-4.36 1.933h-.04c-1.707-.013-3.067-.627-4.04-1.827C4.473 16.907 3.973 15.2 3.96 13.12v-.08c.013-2.08.513-3.787 1.493-5.067.973-1.267 2.333-1.907 4.04-1.92h.04c1.72.013 3.08.653 4.04 1.907.48.627.84 1.373 1.08 2.227l1.187-.32c-.293-1.04-.733-1.947-1.333-2.72C13.307 5.547 11.667 4.8 9.533 4.787h-.053c-2.12.013-3.76.76-4.867 2.227C3.547 8.44 2.96 10.467 2.947 12.96v.12c.013 2.467.6 4.467 1.667 5.947 1.107 1.533 2.747 2.32 4.88 2.333h.053c2.293-.013 4.067-.813 5.267-2.373 1.2-1.56 1.8-3.72 1.76-6.413l-.013-.24-.007.013zm-4.36 3.827c-.4.413-.92.627-1.56.627-.68 0-1.227-.253-1.627-.747-.44-.547-.667-1.36-.667-2.4 0-.267.013-.52.04-.76.24-.147.52-.227.84-.227.56 0 1 .173 1.307.507.333.36.507.88.507 1.533 0 .6-.16 1.093-.493 1.467h.04-.387z" />
           </svg>
           <span class="text-xs md:text-sm text-text-secondary font-medium">Threads</span>
         </div>
