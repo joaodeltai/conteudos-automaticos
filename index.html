@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conteúdos Automáticos | Agentes OpenClaw publicando em 9 plataformas</title>
+  <meta name="description"
+    content="Implementação OpenClaw completa: 3 agentes de IA pesquisam, criam e publicam conteúdo pela sua marca em 9 plataformas. A partir de R$ 27,90.">
+  <meta property="og:title" content="Conteúdos Automáticos | Agentes OpenClaw publicando em 9 plataformas">
+  <meta property="og:description"
+    content="Implementação OpenClaw completa: 3 agentes de IA pesquisam, criam e publicam conteúdo pela sua marca em 9 plataformas. A partir de R$ 27,90.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='20' width='100' height='100' fill='%23FF7900'/><text x='50' y='72' font-size='60' text-anchor='middle' fill='black' font-weight='bold'>CA</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF7900',
+            'primary-dark': '#E56A00',
+            'primary-light': '#FF9A3D',
+            bg: '#000000',
+            surface: '#111111',
+            'surface-light': '#1A1A1A',
+            'surface-border': '#222222',
+            'text-primary': '#FFFFFF',
+            'text-secondary': '#A0A0A0',
+            'text-muted': '#555555',
+            success: '#22C55E',
+            error: '#EF4444',
+            openclaw: '#E11D48',
+            'openclaw-dark': '#BE123C',
+            'openclaw-light': '#FB7185',
+          },
+          fontFamily: {
+            sans: ["'Helvetica Neue'", 'Helvetica', 'Arial', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
+
+    /* Scroll animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(.16, 1, .3, 1), transform 0.7s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 {
+      transition-delay: 0.1s;
+    }
+
+    .reveal-delay-2 {
+      transition-delay: 0.2s;
+    }
+
+    .reveal-delay-3 {
+      transition-delay: 0.3s;
+    }
+
+    .reveal-delay-4 {
+      transition-delay: 0.4s;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal {
+        transition: opacity 0.3s ease;
+        transform: none;
+      }
+
+      .reveal.visible {
+        transform: none;
+      }
+
+      .orb {
+        animation: none !important;
+      }
+
+      .sticky-cta {
+        transition: none;
+      }
+
+      .pulse-glow {
+        animation: none !important;
+      }
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #FF7900 0%, #FF9A3D 50%, #FBBF24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Glass card */
+    .glass-card {
+      background: rgba(17, 17, 17, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 121, 0, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255, 121, 0, 0.08);
+    }
+
+    /* Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .orb-orange {
+      background: radial-gradient(circle, rgba(255, 121, 0, 0.25) 0%, transparent 70%);
+      animation: float-slow 12s ease-in-out infinite alternate;
+    }
+
+    .orb-blue {
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+      animation: float-slow 16s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes float-slow {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      100% {
+        transform: translate(30px, -20px) scale(1.1);
+      }
+    }
+
+    /* Glow line */
+    .glow-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 121, 0, 0.4) 50%, transparent 100%);
+    }
+
+    /* Sticky CTA */
+    .sticky-cta {
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .sticky-cta.show {
+      transform: translateY(0);
+    }
+
+    /* FAQ */
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(.16, 1, .3, 1), padding 0.4s ease;
+    }
+
+    .faq-answer.open {
+      max-height: 500px;
+    }
+
+    .faq-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .faq-icon.rotated {
+      transform: rotate(45deg);
+    }
+
+    /* Pulse glow for urgency */
+    .pulse-glow {
+      animation: pulse-glow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 121, 0, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 20px 4px rgba(255, 121, 0, 0.15);
+      }
+    }
+
+    /* CTA button glow */
+    .cta-primary {
+      position: relative;
+      background: #FF7900;
+      color: #000;
+      font-weight: 700;
+      border-radius: 14px;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 24px rgba(255, 121, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .cta-primary:hover {
+      background: #E56A00;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 32px rgba(255, 121, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .cta-primary:active {
+      transform: translateY(0);
+    }
+
+    .cta-secondary {
+      position: relative;
+      background: transparent;
+      color: #fff;
+      font-weight: 700;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .cta-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .cta-secondary:active {
+      transform: translateY(0);
+    }
+
+    /* Terminal mockup */
+    .terminal-card {
+      background: #0a0a0a;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: 'SF Mono', 'Fira Code', Monaco, 'Cascadia Code', monospace;
+    }
+
+    .terminal-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #FF7900;
+    }
+
+    .terminal-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22C55E;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .terminal-dot.waiting {
+      background: #FF7900;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .terminal-msg {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #A0A0A0;
+    }
+
+    .progress-track {
+      display: flex;
+      gap: 3px;
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .progress-block {
+      width: 8px;
+      height: 8px;
+      border-radius: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .progress-block.filled {
+      background: #FF7900;
+    }
+
+    .progress-block.filling {
+      animation: block-fill 3s ease-in-out infinite;
+    }
+
+    @keyframes block-fill {
+
+      0%,
+      100% {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      50% {
+        background: #FF7900;
+      }
+    }
+
+    /* Timeline */
+    .timeline-line {
+      background: linear-gradient(180deg, #FF7900 0%, rgba(255, 121, 0, 0.1) 100%);
+    }
+
+    .timeline-dot {
+      box-shadow: 0 0 0 4px rgba(255, 121, 0, 0.15), 0 0 16px rgba(255, 121, 0, 0.2);
+    }
+
+    /* Platform icon */
+    .platform-icon {
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .platform-icon:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 121, 0, 0.3) !important;
+      box-shadow: 0 8px 24px rgba(255, 121, 0, 0.1);
+    }
+
+    /* Grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* Number counter */
+    .count-up {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Pricing highlight */
+    .plan-highlight {
+      position: relative;
+    }
+
+    .plan-highlight::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 20px;
+      padding: 2px;
+      background: linear-gradient(135deg, #FF7900, #FF9A3D, #FF7900);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* Infinite scroll logos */
+    .logos-scroll {
+      overflow: hidden;
+      position: relative;
+      padding: 24px 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(17, 17, 17, 0.6) 50%, rgba(0, 0, 0, 0.8) 100%);
+    }
+
+    .logos-scroll::before,
+    .logos-scroll::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .logos-scroll::before {
+      left: 0;
+      background: linear-gradient(to right, #000, transparent);
+    }
+
+    .logos-scroll::after {
+      right: 0;
+      background: linear-gradient(to left, #000, transparent);
+    }
+
+    .logos-track {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      width: max-content;
+      animation: scroll-left 20s linear infinite;
+    }
+
+    .logos-track:hover {
+      animation-play-state: paused;
+    }
+
+    .logo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .logo-item:hover {
+      opacity: 1;
+    }
+
+    @keyframes scroll-left {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+
+<body class="grid-bg">
+
+  <!-- ============================================================ -->
+  <!-- HEADER                                                        -->
+  <!-- ============================================================ -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-5 md:px-10 h-16 md:h-[72px] flex items-center justify-between">
+      <!-- Logo (esquerda) -->
+      <a href="#hero" class="flex-shrink-0">
+        <img src="logo.png" alt="Conteúdos Automáticos" class="h-8 md:h-10 w-auto">
+      </a>
+
+      <!-- Badge Pré-lançamento (centro) -->
+      <span
+        class="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs md:text-sm font-semibold rounded-full px-4 py-1.5 border border-primary/20">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+        </svg>
+        Pré-lançamento
+      </span>
+
+      <!-- Nav links (direita, apenas desktop) -->
+      <nav class="hidden md:flex items-center gap-6">
+        <a href="#como-funciona" class="text-sm text-text-secondary hover:text-white transition-colors">Como
+          funciona</a>
+        <a href="#planos" class="text-sm text-text-secondary hover:text-white transition-colors">Planos</a>
+      </nav>
+
+      <!-- Spacer mobile (para manter badge centralizado) -->
+      <div class="w-[72px] md:hidden"></div>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- HERO                                                          -->
+  <!-- ============================================================ -->
+  <section id="hero"
+    class="relative min-h-screen flex items-center justify-center px-5 md:px-10 lg:px-20 pt-28 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+    <!-- Orbs -->
+    <div class="orb orb-orange w-[420px] h-[420px] -top-40 -right-40 md:w-[600px] md:h-[600px] md:-top-60 md:-right-20">
+    </div>
+    <div class="orb orb-blue w-[300px] h-[300px] bottom-0 -left-40 md:w-[500px] md:h-[500px]"></div>
+
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+
+      <!-- Espaço reservado para vídeo futuro
+      <div class="aspect-video bg-surface rounded-2xl mb-8"></div>
+      -->
+
+      <h1
+        class="reveal reveal-delay-1 text-[30px] md:text-[52px] lg:text-[60px] font-bold leading-[1.1] tracking-tight mb-7">
+        Agentes OpenClaw produzindo conteúdo pra você.<br class="hidden md:block">
+        <span class="gradient-text">Todo dia. Em 9 plataformas.</span>
+      </h1>
+
+      <p
+        class="reveal reveal-delay-2 text-text-secondary text-[17px] md:text-lg leading-relaxed mb-12 max-w-xl mx-auto">
+        Uma implementação OpenClaw completa: 3 agentes de IA que pesquisam, criam e publicam conteúdo pela sua marca no
+        Instagram, LinkedIn, YouTube, TikTok, X, Threads, Facebook, Substack e Blog. Automático. 24/7.
+      </p>
+
+      <div class="reveal reveal-delay-3">
+        <a href="#planos"
+          class="cta-primary inline-block w-full md:w-auto text-base md:text-lg px-10 py-4 cursor-pointer">
+          Quero conteúdo no automático
+          <svg class="inline w-5 h-5 ml-1 -mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      </div>
+
+      <div
+        class="reveal reveal-delay-4 flex flex-wrap justify-center gap-x-5 gap-y-2.5 mt-12 text-sm text-text-secondary">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Implementação OpenClaw
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          9 plataformas
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Funciona 24/7
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Garantia de 7 dias
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCROLL INFINITO DE LOGOS -->
+  <div class="logos-scroll">
+    <div class="logos-track">
+      <!-- Set 1 -->
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">Instagram</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">LinkedIn</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">YouTube</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">TikTok</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">X (Twitter)</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.5 12.068V11.5h3.25v.568c0 2.776.612 5.022 1.82 6.68 1.151 1.58 2.931 2.393 5.29 2.418h.635c.525-.068.995-.189 1.404-.361.998-.42 1.782-1.148 2.332-2.164.654-1.21.987-2.793.987-4.699V4.5h3.25v9.442c0 2.456-.474 4.555-1.41 6.241-.865 1.558-2.107 2.72-3.693 3.453-.86.397-1.823.658-2.866.773a13.428 13.428 0 01-.662.063l-.024.001a8.2 8.2 0 01-.307.016l-.094.005h-.23z" />
+          <circle cx="17.5" cy="4" r="1.5" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">Threads</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">Facebook</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.5"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">Substack</span>
+      </div>
+      <div class="logo-item">
+        <svg class="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.5"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+        </svg>
+        <span class="text-sm text-text-secondary font-medium">Blog</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- O QUE É O OPENCLAW                                            -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 bg-surface-light overflow-hidden">
+    <div class="orb orb-blue w-[350px] h-[350px] -top-40 -right-60 opacity-15"></div>
+    <div class="max-w-3xl mx-auto relative z-10">
+      <div class="reveal text-center mb-10">
+        <span class="inline-flex items-center gap-2 text-sm font-semibold rounded-full px-5 py-2 mb-8 border"
+          style="background: rgba(225,29,72,0.15); color: #E11D48; border-color: rgba(225,29,72,0.3);">
+          <span>🦞</span>
+          Powered by OpenClaw
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold leading-tight tracking-tight">
+          OpenClaw: agentes de IA que trabalham por você. <span class="gradient-text">De verdade.</span>
+        </h2>
+      </div>
+
+      <div class="reveal reveal-delay-1 text-text-secondary text-[17px] md:text-lg leading-relaxed space-y-5">
+        <p>O OpenClaw é uma plataforma open-source que cria agentes de IA autônomos. Não chatbots. Agentes que executam
+          tarefas reais, tomam decisões e operam 24 horas por dia.</p>
+        <p>Empresas e profissionais do mundo inteiro já usam OpenClaw pra automatizar operações, conteúdo, atendimento e
+          muito mais.</p>
+        <p>O Conteúdos Automáticos é uma implementação pronta do OpenClaw, focada em um único objetivo: produzir e
+          publicar conteúdo nas suas redes sociais, todo dia, sem você precisar fazer nada.</p>
+        <p class="text-white font-bold">Você não precisa entender de tecnologia. Você não precisa saber o que é um
+          agente de IA. Você só precisa do resultado: conteúdo publicado, todo dia, em 9 plataformas.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- O PROBLEMA                                                    -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-orange w-[300px] h-[300px] bottom-0 -left-40 opacity-15"></div>
+    <div class="max-w-4xl mx-auto relative z-10">
+      <div class="reveal text-center mb-14">
+        <h2 class="text-[26px] md:text-[40px] font-bold leading-tight tracking-tight">
+          Você sabe que precisa postar.<br>
+          <span class="text-text-secondary">Mas nunca sobra tempo.</span>
+        </h2>
+      </div>
+
+      <div
+        class="reveal reveal-delay-1 text-text-secondary text-[17px] md:text-lg leading-relaxed text-center max-w-2xl mx-auto mb-14 space-y-3">
+        <p>Você é empresário. Tem clientes pra atender, equipe pra liderar, decisões pra tomar.</p>
+        <p>Mas todo mundo diz que você precisa postar conteúdo. Todo dia. Em várias plataformas.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-14">
+        <div class="reveal glass-card rounded-2xl p-6 cursor-pointer">
+          <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-[15px] leading-relaxed">Contratar um social media por R$ 2.000 a R$
+              5.000/mês. E ainda precisa revisar tudo.</p>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-1 glass-card rounded-2xl p-6 cursor-pointer">
+          <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-[15px] leading-relaxed">Fazer você mesmo. Gasta 2 a 3 horas por dia que
+              você não tem.</p>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-2 glass-card rounded-2xl p-6 cursor-pointer">
+          <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-[15px] leading-relaxed">Usar o ChatGPT. Copia, cola, formata, agenda...
+              no terceiro dia já desistiu.</p>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-3 glass-card rounded-2xl p-6 cursor-pointer">
+          <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-[15px] leading-relaxed">Postar quando dá. Uma vez por semana, sem
+              consistência, sem resultado.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal glass-card rounded-2xl p-8 md:p-10 text-center relative overflow-hidden">
+        <div class="orb orb-orange w-[200px] h-[200px] -top-20 -right-20 opacity-50"></div>
+        <p class="text-text-secondary text-[17px] md:text-lg leading-relaxed mb-5 relative z-10">
+          E enquanto isso? Seus concorrentes postam todo dia. Em todas as plataformas. A marca deles cresce. A sua fica
+          invisível.
+        </p>
+        <p class="text-white font-bold text-lg md:text-xl leading-snug relative z-10">
+          Não é falta de vontade. É falta de um sistema que funcione sem depender de você.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- A SOLUÇÃO                                                     -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-orange w-[400px] h-[400px] -top-40 -left-40 opacity-40"></div>
+
+    <div class="max-w-5xl mx-auto relative z-10">
+      <!-- Header -->
+      <div class="reveal text-center mb-6">
+        <span class="inline-flex items-center gap-2 text-primary text-sm font-semibold mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+          </svg>
+          A SOLUÇÃO
+        </span>
+        <h2 class="text-[28px] md:text-[48px] lg:text-[56px] font-bold leading-[1.1] tracking-tight">
+          3 agentes trabalhando<br>
+          <span class="gradient-text">em paralelo.</span>
+        </h2>
+      </div>
+      <p class="reveal text-text-secondary text-[17px] md:text-lg text-center max-w-2xl mx-auto mb-4">
+        O Conteúdos Automáticos é uma implementação OpenClaw com 3 agentes de IA especializados. Eles pesquisam, criam e
+        publicam conteúdo por você. Automaticamente.
+      </p>
+      <p class="reveal text-text-muted text-[15px] text-center max-w-xl mx-auto mb-14">
+        Não é um chatbot. São agentes que trabalham sozinhos, 24 horas por dia.
+      </p>
+
+      <!-- Terminal Mockup -->
+      <div class="reveal terminal-card mb-5">
+        <div class="grid grid-cols-1 md:grid-cols-[280px_1fr]">
+          <!-- Painel esquerdo: Status -->
+          <div class="p-5 md:p-6 md:border-r border-b md:border-b-0 border-white/5">
+            <span class="terminal-label">Agent Status</span>
+            <div class="mt-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="terminal-dot"></span>
+                  <span class="text-[13px] text-white/70">Pesquisador</span>
+                </div>
+                <span class="text-[11px] text-success font-semibold tracking-wider uppercase">Complete</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="terminal-dot"></span>
+                  <span class="text-[13px] text-white/70">Produtor</span>
+                </div>
+                <span class="text-[11px] text-success font-semibold tracking-wider uppercase">Complete</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="terminal-dot"></span>
+                  <span class="text-[13px] text-white/70">Publicação</span>
+                </div>
+                <span class="text-[11px] text-success font-semibold tracking-wider uppercase">Complete</span>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-white/5">
+              <span class="terminal-label">Execução</span>
+              <div class="mt-3">
+                <span class="text-[28px] font-bold text-primary leading-none">3</span>
+                <span class="text-[13px] text-text-muted ml-1.5">agentes em paralelo</span>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-white/5">
+              <span class="terminal-label">Tempo Estimado</span>
+              <div class="mt-3 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[13px] text-text-muted">Sequencial</span>
+                  <span class="text-[13px] text-text-muted line-through">~45 min</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-[13px] text-primary font-semibold">Paralelo</span>
+                  <span class="text-[13px] text-primary font-bold">~6 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Painel direito: Mensagens dos agentes -->
+          <div class="p-5 md:p-6 space-y-5">
+            <!-- Pesquisador -->
+            <div>
+              <div class="flex items-center gap-2 mb-2.5">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <span class="text-[13px] text-white font-semibold">Pesquisador</span>
+              </div>
+              <div class="terminal-msg">
+                Analisei 47 tendências do nicho e selecionei 12 temas com alto potencial de engajamento. Concorrentes
+                top estão focando em conteúdo educativo curto.
+              </div>
+            </div>
+
+            <!-- Produtor -->
+            <div>
+              <div class="flex items-center gap-2 mb-2.5">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                </svg>
+                <span class="text-[13px] text-white font-semibold">Produtor</span>
+              </div>
+              <div class="terminal-msg">
+                Criei 9 posts adaptados para cada plataforma. Carrossel pro Instagram, thread pro X, artigo pro
+                Substack. Tudo no tom de voz da marca.
+              </div>
+            </div>
+
+            <!-- Publicação -->
+            <div>
+              <div class="flex items-center gap-2 mb-2.5">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+                <span class="text-[13px] text-white font-semibold">Publicação</span>
+              </div>
+              <div class="terminal-msg">
+                Publicando em 9 plataformas simultaneamente. Horários otimizados por rede. Instagram 18h, LinkedIn 8h,
+                TikTok 20h. Tudo agendado.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de progresso -->
+        <div class="progress-track">
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filled"></div>
+          <div class="progress-block filling"></div>
+          <div class="progress-block filling"></div>
+          <div class="progress-block filling"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+          <div class="progress-block"></div>
+        </div>
+
+        <!-- 3 colunas de features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 border-t border-white/5">
+          <div class="p-5 md:p-6 md:border-r border-b md:border-b-0 border-white/5">
+            <span class="terminal-label">Pesquisa Diária</span>
+            <p class="text-[13px] text-text-muted mt-3 leading-relaxed">
+              Busca tendências, analisa concorrentes e seleciona os melhores temas para o seu nicho — todos os dias,
+              automaticamente.
+            </p>
+          </div>
+          <div class="p-5 md:p-6 md:border-r border-b md:border-b-0 border-white/5">
+            <span class="terminal-label">Produção Automática</span>
+            <p class="text-[13px] text-text-muted mt-3 leading-relaxed">
+              Cria posts, legendas, carrosséis e roteiros no tom da sua marca — adaptados para cada plataforma.
+            </p>
+          </div>
+          <div class="p-5 md:p-6">
+            <span class="terminal-label">Publicação Simultânea</span>
+            <p class="text-[13px] text-text-muted mt-3 leading-relaxed">
+              Agenda e publica nas 9 plataformas no melhor horário de cada rede. Você não precisa abrir nenhum app.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mission Control -->
+      <div class="reveal glass-card rounded-2xl p-8 md:p-10 cursor-pointer group relative overflow-hidden">
+        <div class="orb orb-orange w-[200px] h-[200px] -bottom-20 -right-20 opacity-30"></div>
+        <div class="flex items-start gap-5 relative z-10">
+          <div
+            class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg md:text-xl font-bold mb-3 tracking-tight">Mission Control</h3>
+            <p class="text-text-secondary text-[15px] md:text-base leading-relaxed">
+              Um painel onde você vê tudo: o que foi publicado, o que está agendado, o que está em produção. Aprove ou
+              ajuste qualquer conteúdo antes de ir ao ar. Controle total, num lugar só.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- COMO FUNCIONA                                                 -->
+  <!-- ============================================================ -->
+  <section id="como-funciona" class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-blue w-[400px] h-[400px] top-1/3 -right-60 opacity-10"></div>
+    <div class="orb orb-orange w-[250px] h-[250px] bottom-20 -left-32 opacity-12"></div>
+    <div class="max-w-3xl mx-auto relative z-10">
+      <div class="reveal text-center mb-6">
+        <span class="inline-flex items-center gap-2 text-primary text-sm font-semibold mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+          COMO FUNCIONA
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold leading-tight tracking-tight">
+          3 passos. Do zero a conteúdos publicados<br class="hidden md:block">
+          <span class="gradient-text">em 9 plataformas.</span>
+        </h2>
+      </div>
+
+      <div class="relative pl-20 md:pl-24 mt-16 space-y-14">
+
+        <div class="reveal relative">
+          <div
+            class="absolute -left-[60px] md:-left-[72px] w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center timeline-dot">
+            <span class="text-black font-bold text-sm md:text-base">1</span>
+          </div>
+          <h3 class="text-xl md:text-2xl font-bold mb-3 tracking-tight">Pesquisa automática</h3>
+          <p class="text-text-secondary text-[15px] md:text-base leading-relaxed">
+            O agente pesquisador analisa seu nicho, seus concorrentes e as tendências do momento. Entrega ideias de
+            conteúdo relevantes todo dia.
+          </p>
+        </div>
+
+        <div class="reveal reveal-delay-1 relative">
+          <div
+            class="absolute -left-[60px] md:-left-[72px] w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center timeline-dot">
+            <span class="text-black font-bold text-sm md:text-base">2</span>
+          </div>
+          <h3 class="text-xl md:text-2xl font-bold mb-3 tracking-tight">Criação automática</h3>
+          <p class="text-text-secondary text-[15px] md:text-base leading-relaxed">
+            O agente produtor transforma essas ideias em conteúdos prontos. Posts, legendas, roteiros. Tudo no tom da
+            sua marca.
+          </p>
+        </div>
+
+        <div class="reveal reveal-delay-2 relative">
+          <div
+            class="absolute -left-[60px] md:-left-[72px] w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center timeline-dot">
+            <span class="text-black font-bold text-sm md:text-base">3</span>
+          </div>
+          <h3 class="text-xl md:text-2xl font-bold mb-3 tracking-tight">Publicação automática</h3>
+          <p class="text-text-secondary text-[15px] md:text-base leading-relaxed">
+            O agente de publicação distribui em todas as plataformas, no melhor horário. Você acompanha tudo pelo
+            Mission Control.
+          </p>
+        </div>
+      </div>
+
+      <div class="reveal mt-16 glass-card rounded-2xl p-6 md:p-8 text-center">
+        <p class="text-white font-bold text-lg md:text-xl">
+          Tempo total de envolvimento seu: <span class="gradient-text">aprovar os conteúdos. Só isso.</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- AS PLATAFORMAS                                                -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-blue w-[400px] h-[400px] top-0 -right-40 opacity-40"></div>
+
+    <div class="max-w-4xl mx-auto text-center relative z-10">
+      <div class="reveal">
+        <span class="inline-flex items-center gap-2 text-primary text-sm font-semibold mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+          </svg>
+          ALCANCE
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold leading-tight tracking-tight mb-14">
+          9 plataformas. Um único sistema OpenClaw.<br>
+          <span class="gradient-text">Zero trabalho manual.</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-3 md:flex md:flex-wrap md:justify-center gap-3 md:gap-4 mb-14">
+        <div
+          class="reveal platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">Instagram</span>
+        </div>
+        <div
+          class="reveal reveal-delay-1 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">LinkedIn</span>
+        </div>
+        <div
+          class="reveal reveal-delay-1 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">YouTube</span>
+        </div>
+        <div
+          class="reveal reveal-delay-2 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">TikTok</span>
+        </div>
+        <div
+          class="reveal reveal-delay-2 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">X (Twitter)</span>
+        </div>
+        <div
+          class="reveal reveal-delay-3 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.5 12.068V11.5h3.25v.568c0 2.776.612 5.022 1.82 6.68 1.151 1.58 2.931 2.393 5.29 2.418h.635c.525-.068.995-.189 1.404-.361.998-.42 1.782-1.148 2.332-2.164.654-1.21.987-2.793.987-4.699V4.5h3.25v9.442c0 2.456-.474 4.555-1.41 6.241-.865 1.558-2.107 2.72-3.693 3.453-.86.397-1.823.658-2.866.773a13.428 13.428 0 01-.662.063l-.024.001a8.2 8.2 0 01-.307.016l-.094.005h-.23z" />
+            <circle cx="17.5" cy="4" r="1.5" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">Threads</span>
+        </div>
+        <div
+          class="reveal reveal-delay-3 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">Facebook</span>
+        </div>
+        <div
+          class="reveal reveal-delay-4 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.5"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">Substack</span>
+        </div>
+        <div
+          class="reveal reveal-delay-4 platform-icon glass-card rounded-2xl p-4 md:px-6 md:py-5 flex flex-col items-center gap-2.5 cursor-pointer">
+          <svg class="w-7 h-7 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.5"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+          </svg>
+          <span class="text-xs md:text-sm text-text-secondary font-medium">Blog</span>
+        </div>
+      </div>
+
+      <div class="reveal glass-card rounded-2xl p-8 md:p-10 max-w-2xl mx-auto">
+        <p class="text-primary text-lg md:text-xl font-semibold leading-relaxed">
+          "Enquanto você foca no seu negócio, seus conteúdos estão sendo publicados em 9 plataformas diferentes. Todo
+          dia. Automaticamente."
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- ANTES vs DEPOIS                                               -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-orange w-[350px] h-[350px] top-20 -right-48 opacity-12"></div>
+    <div class="max-w-4xl mx-auto relative z-10">
+      <div class="reveal text-center mb-14">
+        <span class="inline-flex items-center gap-2 text-primary text-sm font-semibold mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+          </svg>
+          COMPARATIVO
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold leading-tight tracking-tight">
+          A diferença entre tentar produzir conteúdo<br class="hidden md:block">
+          <span class="gradient-text">e ter agentes OpenClaw fazendo isso por você.</span>
+        </h2>
+      </div>
+
+      <!-- Mobile: cards empilhados -->
+      <div class="md:hidden space-y-4">
+        <div class="reveal glass-card rounded-2xl p-6 border-error/20"
+          style="border-color: rgba(239,68,68,0.15); background: linear-gradient(135deg, rgba(239,68,68,0.05), transparent);">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 class="text-error font-bold">Antes</h3>
+          </div>
+          <ul class="space-y-3 text-text-secondary text-[15px]">
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Gasta horas pensando no que postar</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Posta quando lembra (1 a 2x por semana)</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Copia e cola do ChatGPT sem personalidade</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Abre cada app pra postar manualmente</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Paga R$ 3.000+/mês por um social media</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>Desiste depois de 2 semanas</li>
+          </ul>
+        </div>
+        <div class="reveal reveal-delay-1 glass-card rounded-2xl p-6"
+          style="border-color: rgba(34,197,94,0.15); background: linear-gradient(135deg, rgba(34,197,94,0.05), transparent);">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <h3 class="text-success font-bold">Depois</h3>
+          </div>
+          <ul class="space-y-3 text-text-secondary text-[15px]">
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Recebe ideias prontas todo dia</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Conteúdo publicado em 9 plataformas diariamente</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Conteúdo no tom da sua marca, adaptado pra cada rede</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Tudo publicado automaticamente</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Setup único a partir de R$ 27,90</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Agentes rodando 24/7 sem depender de você</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Desktop: side-by-side comparison -->
+      <div class="hidden md:block">
+        <div class="glass-card rounded-2xl overflow-hidden">
+          <div class="grid grid-cols-[1fr_1fr] divide-x divide-white/5">
+            <div class="p-8" style="background: linear-gradient(180deg, rgba(239,68,68,0.06), transparent);">
+              <div class="flex items-center gap-2 mb-6">
+                <div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h3 class="font-bold text-error">Antes</h3>
+              </div>
+              <ul class="space-y-4 text-text-secondary text-[15px]">
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Gasta horas pensando no que postar</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Posta quando lembra (1 a 2x por semana)</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Copia e cola do ChatGPT sem personalidade</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Abre cada app pra postar manualmente</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Paga R$ 3.000+/mês por um social media</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-error shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>Desiste depois de 2 semanas</li>
+              </ul>
+            </div>
+            <div class="p-8" style="background: linear-gradient(180deg, rgba(34,197,94,0.06), transparent);">
+              <div class="flex items-center gap-2 mb-6">
+                <div class="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <h3 class="font-bold text-success">Depois</h3>
+              </div>
+              <ul class="space-y-4 text-text-secondary text-[15px]">
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Recebe ideias prontas todo dia</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Conteúdo publicado em 9 plataformas diariamente</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Conteúdo no tom da sua marca, adaptado pra cada rede</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Tudo publicado automaticamente</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Setup único a partir de R$ 27,90</li>
+                <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none"
+                    stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>Agentes rodando 24/7 sem depender de você</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- OS PLANOS                                                     -->
+  <!-- ============================================================ -->
+  <section id="planos" class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-orange w-[500px] h-[500px] top-1/4 -left-60 opacity-30"></div>
+    <div class="orb orb-blue w-[400px] h-[400px] bottom-0 -right-40 opacity-30"></div>
+
+    <div class="max-w-5xl mx-auto relative z-10">
+      <div class="reveal text-center mb-14">
+        <span
+          class="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold rounded-full px-5 py-2 mb-6 border border-primary/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+          </svg>
+          Preço de pré-lançamento. Vai subir em breve.
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold tracking-tight">Escolha como quer começar.</h2>
+      </div>
+
+      <!-- Espaço reservado para depoimentos
+      <div class="mb-12"></div>
+      -->
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 mb-10">
+        <!-- Plano 1 -->
+        <div class="reveal glass-card rounded-[20px] p-8 flex flex-col">
+          <h3 class="text-lg font-bold mb-1 tracking-tight">Faça Você Mesmo</h3>
+          <div class="mb-5 mt-3">
+            <span class="gradient-text text-4xl md:text-5xl font-bold">R$ 27,90</span>
+            <span class="text-text-muted text-sm ml-2">(pagamento único)</span>
+          </div>
+          <p class="text-text-secondary text-[15px] mb-7">O passo a passo completo pra você configurar sua implementação
+            OpenClaw.</p>
+
+          <ul class="space-y-3.5 text-text-secondary text-[15px] flex-1 mb-8">
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Guia completo, do zero à primeira publicação</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>3 agentes prontos pra copiar e usar</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Mission Control pronto</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Templates de tom de voz e personalidade</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Configuração das 9 plataformas</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Acesso ao grupo exclusivo de suporte</li>
+          </ul>
+
+          <p class="text-text-muted text-sm mb-6">Pra quem: quer meter a mão na massa e economizar.</p>
+
+          <a href="#" data-plan="diy" class="cta-secondary block w-full text-center px-8 py-4 cursor-pointer">
+            Começar agora por R$ 27,90
+            <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Plano 2 -->
+        <div class="reveal reveal-delay-1 plan-highlight rounded-[20px] p-8 flex flex-col relative"
+          style="background: rgba(17,17,17,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+          <span
+            class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold rounded-full px-4 py-1.5 flex items-center gap-1.5 whitespace-nowrap">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            Mais Rápido
+          </span>
+
+          <h3 class="text-lg font-bold mb-1 tracking-tight">Implementação Completa</h3>
+          <div class="mb-5 mt-3">
+            <span class="gradient-text text-4xl md:text-5xl font-bold">R$ 97,90</span>
+            <span class="text-text-muted text-sm ml-2">(pagamento único)</span>
+          </div>
+          <p class="text-text-secondary text-[15px] mb-7">Eu configuro toda a sua implementação OpenClaw. Remotamente.
+            Você só usa.</p>
+
+          <ul class="space-y-3.5 text-text-secondary text-[15px] flex-1 mb-6">
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Tudo do Plano 1, mais:</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Implementação remota personalizada</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Tom de voz calibrado com a sua marca</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>3 agentes testados e validados antes da entrega</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Sessão de entrega com orientação de uso</li>
+            <li class="flex gap-2.5"><svg class="w-4 h-4 text-success shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>Conteúdo já saindo em até 48h</li>
+          </ul>
+
+          <div class="pulse-glow bg-primary/10 border border-primary/30 rounded-xl p-3.5 mb-6 text-center">
+            <span class="text-primary font-bold text-sm flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              Apenas <span class="count-up" data-target="7">7</span> vagas disponíveis.
+            </span>
+          </div>
+
+          <p class="text-text-muted text-sm mb-2">Pra quem: quer tudo pronto, sem se preocupar com a parte técnica.</p>
+          <p class="text-text-muted text-sm mb-6">Após a compra: você recebe um link de WhatsApp pra iniciar
+            imediatamente.</p>
+
+          <a href="#" data-plan="done-for-you" class="cta-primary block w-full text-center px-8 py-4 cursor-pointer">
+            Quero tudo pronto por R$ 97,90
+            <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Tabela comparativa: Desktop -->
+      <div class="reveal hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div class="grid grid-cols-3 text-sm">
+          <div class="p-4 border-b border-white/5 font-bold text-text-muted">Recurso</div>
+          <div class="p-4 border-b border-l border-white/5 font-bold text-center">Faça Você Mesmo</div>
+          <div class="p-4 border-b border-l border-white/5 font-bold text-center text-primary">Implementação Completa
+          </div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">3 agentes IA</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Mission Control</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">9 plataformas</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Guia em vídeo</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Grupo de suporte</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Implementação remota</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-text-muted inline"
+              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Personalização pro nicho</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-text-muted inline"
+              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Sessão de entrega</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-text-muted inline"
+              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 border-b border-white/5 text-text-secondary">Conteúdo em 48h</div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-text-muted inline"
+              fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+            </svg></div>
+          <div class="p-3.5 border-b border-l border-white/5 text-center"><svg class="w-4 h-4 text-success inline"
+              fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg></div>
+
+          <div class="p-3.5 px-4 text-text-secondary">Vagas</div>
+          <div class="p-3.5 border-l border-white/5 text-center text-text-muted">Ilimitadas</div>
+          <div class="p-3.5 border-l border-white/5 text-center text-primary font-bold">7 vagas</div>
+        </div>
+      </div>
+
+      <!-- Tabela comparativa: Mobile (accordion) -->
+      <div class="reveal md:hidden">
+        <button id="compare-toggle"
+          class="w-full glass-card rounded-2xl p-4 text-center text-text-secondary flex items-center justify-center gap-2 cursor-pointer"
+          onclick="toggleCompare()">
+          Comparar planos
+          <svg class="w-4 h-4 faq-icon" id="compare-chevron" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
+        <div id="compare-content" class="faq-answer">
+          <div class="glass-card border-t-0 rounded-b-2xl p-5 space-y-3 text-sm mt-[-1px]">
+            <div class="flex justify-between items-center"><span class="text-text-secondary">3 agentes IA</span><span
+                class="text-success text-xs font-medium">Ambos</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Mission Control</span><span
+                class="text-success text-xs font-medium">Ambos</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">9 plataformas</span><span
+                class="text-success text-xs font-medium">Ambos</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Guia em vídeo</span><span
+                class="text-success text-xs font-medium">Ambos</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Grupo de
+                suporte</span><span class="text-success text-xs font-medium">Ambos</span></div>
+            <div class="h-px bg-white/5 my-1"></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Implementação
+                remota</span><span class="text-primary text-xs font-medium">Só Plano 2</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Personalização pro
+                nicho</span><span class="text-primary text-xs font-medium">Só Plano 2</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Sessão de
+                entrega</span><span class="text-primary text-xs font-medium">Só Plano 2</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Conteúdo em 48h</span><span
+                class="text-primary text-xs font-medium">Só Plano 2</span></div>
+            <div class="flex justify-between items-center"><span class="text-text-secondary">Vagas</span><span
+                class="text-primary text-xs font-bold">7 vagas (Plano 2)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- PRA QUEM É                                                    -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-blue w-[300px] h-[300px] top-1/4 -left-40 opacity-12"></div>
+    <div class="orb orb-orange w-[250px] h-[250px] bottom-10 -right-32 opacity-10"></div>
+    <div class="max-w-3xl mx-auto relative z-10">
+      <div class="reveal text-center mb-14">
+        <h2 class="text-[26px] md:text-[40px] font-bold tracking-tight">Isso é pra você se...</h2>
+      </div>
+
+      <div class="reveal space-y-4 mb-14">
+        <div class="flex gap-4 items-start p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
+          <div class="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">É empresário e sabe que precisa
+            produzir conteúdo, mas não tem tempo</p>
+        </div>
+        <div class="flex gap-4 items-start p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
+          <div class="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Já tentou postar com consistência e
+            não conseguiu manter</p>
+        </div>
+        <div class="flex gap-4 items-start p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
+          <div class="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Não quer (ou não pode) pagar R$
+            3.000+/mês num social media</p>
+        </div>
+        <div class="flex gap-4 items-start p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
+          <div class="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Quer estar presente em 9 plataformas
+            sem multiplicar o trabalho</p>
+        </div>
+        <div class="flex gap-4 items-start p-4 rounded-xl hover:bg-white/[0.02] transition-colors">
+          <div class="w-7 h-7 rounded-lg bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Busca uma solução que funcione
+            sozinha, não mais uma ferramenta pra operar</p>
+        </div>
+      </div>
+
+      <div class="reveal h-px bg-white/5 mb-14"></div>
+
+      <div class="reveal">
+        <h3 class="text-xl md:text-2xl font-bold mb-8">Não é pra você se...</h3>
+        <div class="space-y-4">
+          <div class="flex gap-4 items-start p-4 rounded-xl">
+            <div class="w-7 h-7 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Quer um curso teórico sobre
+              inteligência artificial</p>
+          </div>
+          <div class="flex gap-4 items-start p-4 rounded-xl">
+            <div class="w-7 h-7 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Espera resultados sem dedicar nem 1
+              hora de setup (Plano 1)</p>
+          </div>
+          <div class="flex gap-4 items-start p-4 rounded-xl">
+            <div class="w-7 h-7 rounded-lg bg-error/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p class="text-text-secondary text-base md:text-[17px] leading-relaxed">Precisa de edição profissional de
+              vídeos (os agentes criam roteiros, não editam vídeo)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- FAQ                                                           -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-blue w-[350px] h-[350px] top-40 -right-48 opacity-10"></div>
+    <div class="max-w-3xl mx-auto relative z-10">
+      <div class="reveal text-center mb-14">
+        <span class="inline-flex items-center gap-2 text-primary text-sm font-semibold mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+          </svg>
+          FAQ
+        </span>
+        <h2 class="text-[26px] md:text-[40px] font-bold tracking-tight">Perguntas frequentes</h2>
+      </div>
+
+      <div class="space-y-2" id="faq-container">
+        <div class="reveal faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">O que exatamente eu recebo?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              <p class="mb-3"><strong class="text-white">Plano 1 (Faça Você Mesmo):</strong> Acesso ao guia em vídeo com
+                o passo a passo completo, os 3 agentes de IA prontos pra copiar e usar (Pesquisador, Produtor e
+                Publicação), o Mission Control configurado, templates de tom de voz e personalidade da marca,
+                configuração das 9 plataformas e acesso ao grupo exclusivo de suporte.</p>
+              <p><strong class="text-white">Plano 2 (Implementação Completa):</strong> Tudo do Plano 1, mais a
+                implementação remota personalizada pro seu negócio, tom de voz calibrado com a sua marca, agentes
+                testados e validados, sessão de entrega com orientação e conteúdo já saindo em até 48h.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-1 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">O que é o OpenClaw?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              OpenClaw é uma plataforma open-source pra criar agentes de IA autônomos. Diferente de chatbots, os agentes
+              OpenClaw executam tarefas reais de forma independente, 24/7. O Conteúdos Automáticos é uma implementação
+              pronta do OpenClaw focada em produção de conteúdo.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-1 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Preciso saber programar?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Não. O Plano 1 tem um guia em vídeo que mostra cada clique. O Plano 2 é feito por mim, você não precisa
+              mexer em nada técnico.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-1 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Quanto custa pra manter rodando?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              O sistema roda em cima de ferramentas de IA que têm planos gratuitos ou de baixo custo. O custo mensal
+              estimado é entre R$ 0 e R$ 100, dependendo do volume de conteúdo e das ferramentas que você já usa. Tudo é
+              explicado no guia.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-2 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Em quais plataformas os agentes publicam?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Instagram, LinkedIn, YouTube, TikTok, X (Twitter), Threads, Facebook, Substack e Blog. São 9 plataformas
+              cobertas.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-2 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Quanto tempo até começar a funcionar?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              <strong class="text-white">Plano 1:</strong> depende de você. Seguindo o guia, em 1 a 2 horas você já tem
+              tudo funcionando.<br>
+              <strong class="text-white">Plano 2:</strong> em até 48 horas após a sessão inicial, seus conteúdos já
+              estarão sendo publicados.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-2 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Os conteúdos ficam genéricos?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Não. Os agentes são configurados com o tom de voz, personalidade e nicho da sua marca. O conteúdo é
+              adaptado pra cada plataforma e soa como se fosse escrito por alguém que conhece o seu negócio.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-3 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Posso revisar antes de publicar?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Sim. O Mission Control mostra tudo que está agendado. Você pode aprovar, editar ou rejeitar qualquer
+              conteúdo antes de ele ir ao ar. Você tem controle total.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-3 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">E se eu não gostar?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Você tem 7 dias de garantia. Se não ficar satisfeito, é só pedir o reembolso. Sem perguntas, sem
+              burocracia.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-3 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Funciona pra qualquer nicho?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Sim. Os agentes são configurados de acordo com o seu nicho. Já funciona pra qualquer área que dependa de
+              conteúdo pra atrair clientes: saúde, educação, tecnologia, serviços, varejo, consultoria, entre outros.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-4 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Preciso de computador?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Pra o setup inicial, sim, é recomendado usar um computador. Depois de configurado, você acompanha e aprova
+              tudo pelo celular.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-4 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Como funciona o Plano 2?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Após a compra, você recebe um link de WhatsApp. A gente agenda uma sessão rápida pra entender seu negócio,
+              nicho e tom de voz. Eu configuro tudo remotamente. Em até 48 horas, seus conteúdos já estarão sendo
+              publicados. Depois, você recebe uma sessão de entrega com orientação de uso.
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-delay-4 faq-item glass-card rounded-xl overflow-hidden">
+          <button class="w-full p-5 md:p-6 text-left flex justify-between items-center gap-4 cursor-pointer"
+            onclick="toggleFaq(this)">
+            <span class="font-semibold text-[15px] md:text-base">Por que só 7 vagas no Plano 2?</span>
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5 text-text-secondary faq-icon" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="px-5 md:px-6 pb-5 md:pb-6 text-text-secondary text-[15px] leading-relaxed">
+              Porque cada implementação é feita por mim, individualmente. Pra garantir qualidade e atenção
+              personalizada, limito a 7 clientes por ciclo. Quando as vagas acabam, só reabrem na próxima rodada.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="glow-line"></div>
+
+  <!-- ============================================================ -->
+  <!-- CTA FINAL                                                     -->
+  <!-- ============================================================ -->
+  <section class="relative px-5 md:px-10 lg:px-20 py-20 md:py-28 overflow-hidden">
+    <div class="orb orb-orange w-[500px] h-[500px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20"></div>
+
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <div class="reveal">
+        <h2 class="text-[26px] md:text-[40px] font-bold tracking-tight mb-4">
+          Seus conteúdos não vão se criar sozinhos.
+        </h2>
+        <p class="text-text-secondary text-lg md:text-xl italic mb-10">
+          A não ser que você coloque agentes OpenClaw pra trabalhar agora.
+        </p>
+      </div>
+
+      <div class="reveal reveal-delay-1">
+        <p class="text-text-secondary text-base md:text-lg leading-relaxed mb-3">
+          Enquanto você lê isso, seus concorrentes estão postando. Todo dia. Em todas as plataformas.
+        </p>
+        <p class="text-text-secondary text-base md:text-lg leading-relaxed mb-12">
+          Com o Conteúdos Automáticos, você configura seus agentes OpenClaw uma vez e eles trabalham por você. Todo dia.
+          Em 9 plataformas. Sem parar.
+        </p>
+      </div>
+
+      <div class="reveal reveal-delay-2">
+        <span
+          class="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold rounded-full px-5 py-2 mb-10 border border-primary/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+          </svg>
+          Preço de pré-lançamento. Vai subir em breve.
+        </span>
+      </div>
+
+      <div class="reveal reveal-delay-3 flex flex-col md:flex-row gap-4 justify-center mb-12">
+        <a href="#" data-plan="diy" class="cta-secondary w-full md:w-auto text-center px-8 py-4 cursor-pointer">
+          Começar agora por R$ 27,90
+          <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+        <a href="#" data-plan="done-for-you" class="cta-primary w-full md:w-auto text-center px-8 py-4 cursor-pointer">
+          Quero tudo pronto por R$ 97,90
+          <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      </div>
+
+      <div class="reveal reveal-delay-4 flex flex-wrap justify-center gap-x-5 gap-y-2.5 text-sm text-text-secondary">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Pagamento único
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Garantia de 7 dias
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          9 plataformas
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1 border"
+          style="background: rgba(225,29,72,0.15); color: #E11D48; border-color: rgba(225,29,72,0.3);">
+          🦞 Powered by OpenClaw
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================ -->
+  <footer class="px-5 md:px-10 lg:px-20 py-10 border-t border-white/5">
+    <div class="max-w-4xl mx-auto text-center">
+      <p class="text-text-muted text-sm">
+        Conteúdos Automáticos. Uma implementação OpenClaw pra produção de conteúdo em 9 plataformas. Automaticamente.
+      </p>
+      <div class="flex items-center justify-center gap-4 mt-4">
+        <a href="https://docs.openclaw.ai" target="_blank" rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-4 py-1.5 border transition-colors hover:bg-openclaw/10 cursor-pointer"
+          style="background: rgba(225,29,72,0.15); color: #E11D48; border-color: rgba(225,29,72,0.3);">
+          <span>🦞</span> Powered by OpenClaw
+        </a>
+      </div>
+      <p class="text-text-muted/50 text-xs mt-4">&copy; 2026</p>
+    </div>
+  </footer>
+
+  <!-- ============================================================ -->
+  <!-- STICKY CTA MOBILE                                             -->
+  <!-- ============================================================ -->
+  <div id="sticky-cta"
+    class="sticky-cta fixed bottom-0 left-0 right-0 z-50 md:hidden p-4 bg-black/80 backdrop-blur-xl border-t border-white/5">
+    <a href="#planos" class="cta-primary block w-full text-center px-6 py-3.5 text-[15px] cursor-pointer">
+      Quero conteúdo no automático
+      <svg class="inline w-4 h-4 ml-1 -mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </a>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SCRIPTS                                                       -->
+  <!-- ============================================================ -->
+  <script>
+    // Infinite logo scroll – clone items for seamless loop
+    const logosTrack = document.querySelector('.logos-track');
+    if (logosTrack) {
+      const clone = logosTrack.innerHTML;
+      logosTrack.innerHTML = clone + clone;
+    }
+
+    // Intersection Observer for scroll reveal animations
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // Sticky CTA visibility
+    const hero = document.getElementById('hero');
+    const stickyCta = document.getElementById('sticky-cta');
+    const stickyObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        stickyCta.classList.toggle('show', !entry.isIntersecting);
+      });
+    }, { threshold: 0 });
+    stickyObserver.observe(hero);
+
+    // FAQ accordion (single open)
+    function toggleFaq(button) {
+      const item = button.parentElement;
+      const answer = item.querySelector('.faq-answer');
+      const icon = button.querySelector('.faq-icon');
+      const isOpen = answer.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('#faq-container .faq-answer').forEach(a => a.classList.remove('open'));
+      document.querySelectorAll('#faq-container .faq-icon').forEach(i => i.classList.remove('rotated'));
+
+      if (!isOpen) {
+        answer.classList.add('open');
+        icon.classList.add('rotated');
+      }
+    }
+
+    // Compare toggle (mobile)
+    function toggleCompare() {
+      const content = document.getElementById('compare-content');
+      const chevron = document.getElementById('compare-chevron');
+      content.classList.toggle('open');
+      chevron.classList.toggle('rotated');
+    }
+  </script>
+
+</body>
+
+</html>
